@@ -34,7 +34,7 @@ class Fox:
             new_name = self.i.find('a', class_="link-link-MbQDP link-design-default-_nSbv title-root-zZCwT iva-item-title-py3i_ title-listRedesign-_rejR title-root_maxHeight-X6PsH").text
             
             if 'мороз' in new_name:
-                 
+            
                 
                 if  name != new_name:
                     name = new_name                    
@@ -44,6 +44,19 @@ class Fox:
                     self.send_mail(href)
                     
                     break
+
+                print('Ничего нового.')                
+                break
+            if 'Мороз' in new_name:
+                if  name != new_name:
+                    name = new_name                    
+                    href = self.get_href()
+                    print('Что-то новенькое!')
+                    self.send_bot(new_name)
+                    self.send_mail(href)
+                    
+                    break
+
                 print('Ничего нового.')                
                 break
                  
@@ -93,7 +106,7 @@ def main():
 
         b = Fox()
         
-        time.sleep(60)
+        time.sleep(10)
     
 
 
