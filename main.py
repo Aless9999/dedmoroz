@@ -1,58 +1,113 @@
-from flask import Flask, request
-from flask import jsonify
+
+from bs4 import BeautifulSoup
+import smtplib
+import time
+from config import mail, token, chat_id, sword
 import requests
-import json
+
+headers = {
+    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) firefox/92.0.4515.159 Safari/537.36'}
 
 
-app = Flask(__name__)
-
-URL = 'https://api.telegram.org/bot5019823751:AAE0K6MqTcVnaNqqujTTjXMfLS5Oa__JavQ/'
+name = []
 
 
-def main(URL):
-    r = requests.get(URL + 'getMe')
-    write_json(r.json())
+class Fox:
+
+    def __init__(self):
+        url = 'https://www.avito.ru/rossiya?p=1&q=%D0%B4%D0%B5%D0%B4+%D0%BC%D0%BE%D1%80%D0%BE%D0%B7+%D0%B3%D0%B8%D0%BF%D1%81&s=104'
+
+        self.get_html(url)
+
+    def get_html(self, url):
+        try:
+            self.html = (requests.get(url, headers=headers)).text
+            self.work(self.html)
+        except Exception as ex:
+            return(f'Wrong connect{ex}')
+
+    def work(self, html):
+        global name
+
+        soup = BeautifulSoup(html, 'lxml')
+        if soup:
+
+            items = soup.find_all(
+                'div', class_="iva-item-root-_lk9K photo-slider-slider-S15A_ iva-item-list-rfgcH iva-item-redesign-rop6P iva-item-responsive-_lbhG items-item-My3ih items-listItem-Gd1jN js-catalog-item-enum")
+            if len(items) == 0:
+                print('Parser Error')
+                self.send_bot('Restore link!')
+                raise SystemExit.exit()
+            for self.i in items:
+                new_name = self.i.find(
+                    'a', class_="link-link-MbQDP link-design-default-_nSbv title-root-zZCwT iva-item-title-py3i_ title-listRedesign-_rejR title-root_maxHeight-X6PsH").text
+
+                if 'мороз' in new_name:
+
+                    if name != new_name:
+                        name = new_name
+                        href = self.get_href()
+                        print('Что-то новенькое!')
+                        self.send_bot(new_name)
+                        self.send_mail(href)
+
+                        break
+
+                    print('Ничего нового.')
+                    break
+                if 'Мороз' in new_name:
+                    if name != new_name:
+                        name = new_name
+                        href = self.get_href()
+                        print('Что-то новенькое!')
+                        self.send_bot(new_name)
+                        self.send_mail(href)
+
+                        break
+
+                    print('Ничего нового.')
+                    break
+        else:
+            print('Wrong connect!')
+
+    def get_href(self):
+        href = 'https://www.avito.ru' + \
+            self.i.find(class_="link-link-MbQDP link-design-default-_nSbv title-root-zZCwT iva-item-title-py3i_ title-listRedesign-_rejR title-root_maxHeight-X6PsH").get('href')
+        return href
+
+    def send_mail(self, href):
+        global sword
+        sender = mail
+        sword = sword
+
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+
+        try:
+            server.login(sender, sword)
+            server.sendmail(sender, 'oksanaivano820@gmail.com',
+                            f"Subject:New!!!{href}")
+            return "The message send successfully!"
+
+        except Exception as ex:
+            return f"{ex}\n Check your login or passeword please."
+
+    def send_bot(self, message):
+        try:
+            URL = f'https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&parse_mode=Markdown&text={message}'
+            r = requests.get(URL)
+            return "The message to Bot successfully!"
+        except Exception as f:
+            return f'{f} the wrong!'
 
 
+def main():
+    while True:
 
-def get_chat_id():
-    r = requests.get(URL + 'getUpdates')
-    r = r.json()
-    chat_id = r ['result'][-1]['message']['chat']['id']
-    return chat_id
-    
+        b = Fox()
 
+        time.sleep(60*30)
 
 
-def write_json(data, filname = 'answer.json'):
-    with open(filname, 'w') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False) 
-
-
-
-def send_message(chat_id, text='Text'):
-    answer = {'chat_id': chat_id,
-               'text': text}
-    r= requests.post(URL + 'sendMessage', json=answer) 
-    return r.json()          
-
-
-
-@app.route('/', methods=['POST','GET'])
-def index():
-    if request.method == 'POST':
-        r = request.get_json()
-        write_json(r)
-        return jsonify(r)
-
-    return 'Bot welcoms you!'
-
-
-
-
-
-if __name__== '__main__':
-    app.run()
-
-    
-    
+if __name__ == '__main__':
+    main()
